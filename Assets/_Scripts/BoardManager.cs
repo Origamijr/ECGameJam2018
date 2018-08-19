@@ -121,7 +121,39 @@ public class BoardManager : MonoBehaviour {
 
         float r = Random.value;
         if ((r -= removeChance) < 0) {
-            // TODO
+            int toRemove = rooms[Random.Range(0, rooms.Count - 1)];
+            rooms.Remove(toRemove);
+
+            int low = toRemove, high = toRemove, link = 0;
+            while (true) {
+                if (low < 0) {
+                    while (!lastRow[high]) { high++; }
+                    link = high;
+                    break;
+                } else if (high >= maxWidth) {
+                    while (!lastRow[low]) { low--; }
+                    link = low;
+                    break;
+                } else {
+                    if (Random.value < 0f) {
+                        low--;
+                        if (low >= 0 && lastRow[low]) {
+                            link = low;
+                            break;
+                        }
+                    } else {
+                        high++;
+                        if (high < maxWidth && lastRow[high]) {
+                            link = high;
+                            break;
+                        }
+                    }
+                }
+            }
+            from.Remove(toRemove);
+            to.Remove(toRemove);
+            from.Add(toRemove);
+            to.Add(link);
         } else if ((r -= addChance) < 0) {
             int toAdd = gaps[Random.Range(0, gaps.Count - 1)];
             rooms.Add(toAdd);
