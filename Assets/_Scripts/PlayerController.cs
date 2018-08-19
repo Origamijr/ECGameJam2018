@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour {
     public GameObject chargeBar;
     public Sprite[] chargeBarStates = new Sprite[6];
     private float charge = 0f;
-    public float chargeRate = 1f;
+    public float chargeRate = 5f;
     private bool charging = false;
 
     private Rigidbody2D rb;
@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        transform.rotation = Quaternion.identity;
         rb.velocity = speed * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0f)).normalized;
 
         if (Input.GetMouseButtonDown(0)) {
@@ -43,9 +44,11 @@ public class PlayerController : MonoBehaviour {
 
                 GameObject instance = Instantiate(projectile, transform.position + direction, Quaternion.identity);
 
+                instance.GetComponent<ProjectileHandler>().SetIsPlayer(true);
+
                 float rot_z = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                 instance.transform.rotation = Quaternion.Euler(0f, 0f, rot_z);
-                instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * (mousePos - transform.position).normalized;
+                instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * instance.transform.right ;
             }
 
             charge = 0;
