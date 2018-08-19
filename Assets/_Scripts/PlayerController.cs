@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
+
+    public GameObject gameManager;
     
     public float speed = 1f;
     public float dash = 1.5f;
@@ -61,10 +63,11 @@ public class PlayerController : MonoBehaviour {
 
     void Move(float h, float v) {
         if (h != 0f || v != 0f) {
-            movement = (4 * movement + h * transform.right + v * transform.up).normalized;
+            movement = (2 * movement + h * transform.right + v * transform.up).normalized;
             rb.velocity = speed * movement;
         } else {
             rb.velocity = rb.velocity / 2;
+            movement = movement / 2;
         }
     }
 
@@ -85,6 +88,16 @@ public class PlayerController : MonoBehaviour {
             } else {
                 chargeBar.GetComponent<SpriteRenderer>().sprite = chargeBarStates[0];
             }
+        }
+    }
+
+    public Vector3 GetPosition() {
+        return transform.position;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) {
+        if (collision.collider.tag == "UpStairs" || collision.collider.tag == "DownStairs") {
+            gameManager.GetComponent<BoardManager>().ChangeRoom();
         }
     }
 }
