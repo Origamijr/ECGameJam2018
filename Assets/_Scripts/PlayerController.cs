@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour {
     
     public float speed = 1f;
     public float dash = 1.5f;
+    private Vector3 movement;
 
     public GameObject chargeBar;
     public Sprite[] chargeBarStates = new Sprite[6];
@@ -26,7 +27,8 @@ public class PlayerController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         transform.rotation = Quaternion.identity;
-        rb.velocity = speed * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0f)).normalized;
+
+        Move(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
         if (Input.GetMouseButtonDown(0)) {
             charging = true;
@@ -54,6 +56,19 @@ public class PlayerController : MonoBehaviour {
             charge = 0;
         }
 
+        ChargeBar();
+	}
+
+    void Move(float h, float v) {
+        if (h != 0f || v != 0f) {
+            movement = (4 * movement + h * transform.right + v * transform.up).normalized;
+            rb.velocity = speed * movement;
+        } else {
+            rb.velocity = rb.velocity / 2;
+        }
+    }
+
+    void ChargeBar() {
         if (charging) {
             charge += chargeRate;
 
@@ -71,5 +86,5 @@ public class PlayerController : MonoBehaviour {
                 chargeBar.GetComponent<SpriteRenderer>().sprite = chargeBarStates[0];
             }
         }
-	}
+    }
 }
