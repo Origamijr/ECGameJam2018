@@ -14,6 +14,7 @@ public class Room : MonoBehaviour {
 
     private Vector3 midpoint;
 
+    private int col = 0;
     private int layer = 0;
     private Room[] upRooms = new Room[3];
     private Room[] downRooms = new Room[3];
@@ -99,9 +100,18 @@ public class Room : MonoBehaviour {
     public int GetRoomSection() {
         return roomSection;
     }
+
+    public int GetLayer() {
+        return layer;
+    }
+
+    public int GetCol() {
+        return col;
+    }
     
-    public void SetLayer(int layer) {
+    public void SetLayer(int layer, int col) {
         this.layer = layer;
+        this.col = col;
     }
 
     public void SetUpRoom(Room r1, Room r2, Room r3) {
@@ -137,7 +147,6 @@ public class Room : MonoBehaviour {
     }
 
     public void setPlayerToSection(int section) {
-        Debug.Log(section);
 
         float x, y;
 

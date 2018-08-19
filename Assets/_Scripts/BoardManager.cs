@@ -6,11 +6,14 @@ using Random = UnityEngine.Random;
 public class BoardManager : MonoBehaviour {
 
     public GameObject mainCamera;
+    public GameObject minimapCamera;
     public GameObject roomPrefab;
+    public GameObject minimapObj;
+    private Minimap minimap;
     
     private Room currRoom = null;
 
-    private int maxWidth = 7;
+    public int maxWidth = 7;
 
     private List<Room[]> board;
 
@@ -19,40 +22,62 @@ public class BoardManager : MonoBehaviour {
     void InititializeBoard() {
         board = new List<Room[]>();
 
+        List<int> rooms = new List<int>();
+        rooms.Add(maxWidth / 2);
+        List<int> from = new List<int>();
+        List<int> to = new List<int>();
+
         // start layer (control tutorial)
         Room[] layer1 = new Room[maxWidth];
 
-        currRoom = CreateRoom(0);
+        currRoom = CreateRoom(0, maxWidth / 2);
         layer1[maxWidth / 2] = currRoom;
+
+        minimap.GenerateLayer(rooms, from, to);
 
         board.Add(layer1);
 
         // second layer (combat tutorial)
         Room[] layer2 = new Room[maxWidth];
 
-        layer2[maxWidth / 2] = CreateRoom(1);
+        layer2[maxWidth / 2] = CreateRoom(1, maxWidth / 2);
         layer1[maxWidth / 2].SetDownRoom(null, layer2[maxWidth / 2], null);
         layer2[maxWidth / 2].SetUpRoom(null, layer1[maxWidth / 2], null);
+
+        from.Add(maxWidth / 2);
+        to.Add(maxWidth / 2);
+        minimap.GenerateLayer(rooms, from, to);
 
         board.Add(layer2);
         
         // third layer (sentry tutorial)
         Room[] layer3 = new Room[maxWidth];
 
-        layer3[maxWidth / 2] = CreateRoom(2);
+        layer3[maxWidth / 2] = CreateRoom(2, maxWidth / 2);
         layer2[maxWidth / 2].SetDownRoom(null, layer3[maxWidth / 2], null);
         layer3[maxWidth / 2].SetUpRoom(null, layer2[maxWidth / 2], null);
+
+        minimap.GenerateLayer(rooms, from, to);
 
         board.Add(layer3);
 
         // fourth layer (split)
         Room[] layer4 = new Room[maxWidth];
 
-        layer4[maxWidth / 2 - 1] = CreateRoom(3);
-        layer4[maxWidth / 2 + 1] = CreateRoom(3);
+        layer4[maxWidth / 2 - 1] = CreateRoom(3, maxWidth / 2 - 1);
+        layer4[maxWidth / 2 + 1] = CreateRoom(3, maxWidth / 2 + 1);
         layer3[maxWidth / 2].SetDownRoom(layer4[maxWidth / 2 - 1], null, layer4[maxWidth / 2 + 1]);
-        layer4[maxWidth / 2 - 1].SetUpRoom(null, layer3[maxWidth / 2], null);
-        layer4[maxWidth / 2 + 1].SetUpRoom(null, layer3[maxWidth / 2], null);
+        layer4[maxWidth / 2 - 1].SetUpRoom(null, null, layer3[maxWidth / 2]);
+        layer4[maxWidth / 2 + 1].SetUpRoom(layer3[maxWidth / 2], null, null);
+
+        rooms.Clear();
+        rooms.Add(maxWidth / 2 - 1);
+        rooms.Add(maxWidth / 2 + 1);
+        from.Add(maxWidth / 2);
+        to.Clear();
+        to.Add(maxWidth / 2 - 1);
+        to.Add(maxWidth / 2 + 1);
+        minimap.GenerateLayer(rooms, from, to);
 
         board.Add(layer4);
 
@@ -60,18 +85,127 @@ public class BoardManager : MonoBehaviour {
         // generate room
         currRoom.RoomSetup();
         mainCamera.transform.position = new Vector3(currRoom.GetMidpoint().x, currRoom.GetMidpoint().y, -10f);
+        minimapCamera.transform.position = minimap.GetRoomCoord(0, maxWidth / 2) + (new Vector3(0f, 0f, -10f));
     }
 
-    Room CreateRoom(int layer) {
+    Room CreateRoom(int layer, int col) {
         Room room = Instantiate(roomPrefab).GetComponent<Room>();
-        room.SetLayer(layer);
+        room.SetLayer(layer, col);
         return room;
     }
 
     void GenerateLayer() {
         Room[] lastRow = board[board.Count - 1];
+        int layer = board.Count;
 
-        // TODO
+        List<int> rooms = new List<int>();
+        List<int> from = new List<int>();
+        List<int> to = new List<int>();
+
+        List<int> gaps = new List<int>();
+
+        // establish straights
+        for (int i = 0; i < maxWidth; i++) {
+            if (lastRow[i]) {
+                rooms.Add(i);
+                from.Add(i);
+                to.Add(i);
+            } else {
+                gaps.Add(i);
+            }
+        }
+
+        float t = (((float)rooms.Count - 2) / (maxWidth - 2));
+        float removeChance = 0.9f * t * t;
+        float addChance = 0.9f * (1 - t) * (1 - t);
+
+        float r = Random.value;
+        if ((r -= removeChance) < 0) {
+            // TODO
+        } else if ((r -= addChance) < 0) {
+            int toAdd = gaps[Random.Range(0, gaps.Count - 1)];
+            rooms.Add(toAdd);
+
+            int low = toAdd, high = toAdd, link = 0;
+            while (true) {
+                if (low < 0) {
+                    while (!lastRow[high]) { high++; }
+                    link = high;
+                    break;
+                } else if (high >= maxWidth) {
+                    while (!lastRow[low]) { low--; }
+                    link = low;
+                    break;
+                } else {
+                    if (Random.value < 0f) {
+                        low--;
+                        if (low >= 0 && lastRow[low]) {
+                            link = low;
+                            break;
+                        }
+                    } else {
+                        high++;
+                        if (high < maxWidth && lastRow[high]) {
+                            link = high;
+                            break;
+                        }
+                    }
+                }
+            }
+            from.Add(link);
+            to.Add(toAdd);
+        }
+
+
+        // generate
+        rooms.Sort();
+        from.Sort();
+        to.Sort();
+        Room[] newRow = new Room[maxWidth];
+        for (int i = 0, j = 0; i < maxWidth && j < rooms.Count; i++) {
+            if (rooms[j] == i) {
+                j++;
+                newRow[i] = CreateRoom(layer, i);
+            }
+        }
+        for (int i = 0; i < from.Count;) {
+            Room left = null, right = null, mid = null;
+
+            int top = from[i];
+
+            while (i < from.Count && from[i] == top) {
+                if (top > to[i]) {
+                    left = newRow[to[i]];
+                } else if (top == to[i]) {
+                    mid = newRow[to[i]];
+                } else {
+                    right = newRow[to[i]];
+                }
+                i++;
+            }
+
+            lastRow[top].SetDownRoom(left, mid, right);
+        }
+        for (int i = 0; i < to.Count;) {
+            Room left = null, right = null, mid = null;
+
+            int bot = to[i];
+
+            while (i < to.Count && to[i] == bot) {
+                if (bot > from[i]) {
+                    left = lastRow[from[i]];
+                } else if (bot == from[i]) {
+                    mid = lastRow[from[i]];
+                } else {
+                    right = lastRow[from[i]];
+                }
+                i++;
+            }
+
+            newRow[bot].SetUpRoom(left, mid, right);
+        }
+        board.Add(newRow);
+        minimap.GenerateLayer(rooms, from, to);
     }
 
     public void ChangeRoom() {
@@ -84,18 +218,28 @@ public class BoardManager : MonoBehaviour {
     IEnumerator CameraPan() {
         float t = 0f;
         Time.timeScale = 0f;
-
+        
         int newSection = 5 - currRoom.GetRoomSection();
         Room nextRoom = currRoom.GetNextRoom();
         nextRoom.RoomSetup();
-
+        
         Vector3 start = currRoom.GetMidpoint();
         Vector3 end = nextRoom.GetMidpoint();
+
+        Vector3 mmStart = minimap.GetRoomCoord(currRoom.GetLayer(), currRoom.GetCol());
+        Vector3 mmEnd = minimap.GetRoomCoord(nextRoom.GetLayer(), nextRoom.GetCol());
+
+        // generate new layer if required
+        if (board.Count < nextRoom.GetLayer() + 4) {
+            GenerateLayer();
+        }
 
         while (t <= 1f) {
             if (t > 0.5f) currRoom.Delete();
             t += Time.unscaledDeltaTime / 2;
-            mainCamera.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t)) + (new Vector3(0, 0, -10));
+            float smooth = Mathf.SmoothStep(0f, 1f, t);
+            mainCamera.transform.position = Vector3.Lerp(start, end, smooth) + (new Vector3(0, 0, -10));
+            minimapCamera.transform.position = Vector3.Lerp(mmStart, mmEnd, smooth) + (new Vector3(0, 0, -10));
             yield return null;
         }
 
@@ -108,6 +252,7 @@ public class BoardManager : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        minimap = minimapObj.GetComponent<Minimap>();
         InititializeBoard();
 	}
 	

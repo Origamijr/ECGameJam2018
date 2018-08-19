@@ -5,10 +5,17 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
 
     public GameObject gameManager;
+
+    public GameObject sprite;
     
     public float speed = 1f;
     public float dash = 1.5f;
     private Vector3 movement;
+
+    private bool rolling;
+    private float rollAdd = 6f;
+    private float rot = 0;
+    private float rotSpeed = 20f;
 
     public GameObject chargeBar;
     public Sprite[] chargeBarStates = new Sprite[6];
@@ -29,6 +36,23 @@ public class PlayerController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         transform.rotation = Quaternion.identity;
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && !rolling) {
+            rolling = true;
+            speed += rollAdd;
+        }
+
+        if (rolling) {
+            rot += rotSpeed;
+            if (rot >= 360f) {
+                rot = 0;
+                rolling = false;
+                speed -= rollAdd;
+                sprite.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+            } else {
+                sprite.transform.rotation = Quaternion.Euler(0f, 0f, -Mathf.Sign(rb.velocity.x) * rot);
+            }
+        }
 
         Move(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
@@ -62,12 +86,16 @@ public class PlayerController : MonoBehaviour {
 	}
 
     void Move(float h, float v) {
-        if (h != 0f || v != 0f) {
-            movement = (2 * movement + h * transform.right + v * transform.up).normalized;
-            rb.velocity = speed * movement;
+        if (!rolling) {
+            if (h != 0f || v != 0f) {
+                movement = (2 * movement + h * transform.right + v * transform.up).normalized;
+                rb.velocity = speed * movement;
+            } else {
+                rb.velocity = rb.velocity / 2;
+                movement = movement / 2;
+            }
         } else {
-            rb.velocity = rb.velocity / 2;
-            movement = movement / 2;
+            rb.velocity = speed * movement;
         }
     }
 
