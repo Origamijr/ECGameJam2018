@@ -89,7 +89,7 @@ public class Room : MonoBehaviour {
         midpoint = (grid[0][0].transform.position + grid[rows - 1][cols - 1].transform.position) / 2;
 
         foreach (Enemy e in enemies) {
-            Vector3 lerp = Vector3.Lerp(GetSectionCoord(e.GetPathFrom(), -3f), GetSectionCoord(e.GetPathTo(), -3f), e.GetProgress());
+            Vector3 lerp = Vector3.Lerp(GetSectionCoord(e.GetPathFrom(), -3f), GetSectionCoord(e.GetPathTo(), -3f), Mathf.Clamp(e.GetProgress(), 0.2f, 0.75f));
             e.MoveTo(lerp);
             e.Show();
         }
