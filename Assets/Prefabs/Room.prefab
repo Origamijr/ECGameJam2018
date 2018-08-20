@@ -59,4 +59,6 @@ MonoBehaviour:
   downStairs:
   - {fileID: 1954100499651024, guid: e25cfa184b3e7614bb3287c19a116ada, type: 2}
   - {fileID: 1776169263015186, guid: 68790a8b2631eb344a4ad47c81bcc23c, type: 2}
-  player: {fileID: 1240108578901656, guid: 31c2e4bb20f843d47a5920db9becc70b, type: 2}
+  enemyPrefabs:
+  - {fileID: 1058524011406654, guid: 5257f9efdb6d8c54abfd318913e07f6b, type: 2}
+  sentry: {fileID: 1877434984479364, guid: f3907a52edc671141a7d488d8e2d47cc, type: 2}

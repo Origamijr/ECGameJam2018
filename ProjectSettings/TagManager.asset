@@ -7,6 +7,9 @@ TagManager:
   - Projectile
   - DownStairs
   - UpStairs
+  - Minimap
+  - Tile
+  - Enemy
   layers:
   - Default
   - TransparentFX

@@ -15,6 +15,13 @@ public class Minimap : MonoBehaviour {
     public GameObject blank;
     public GameObject room;
     public GameObject[] paths;
+    public GameObject enemyPrefab;
+    public GameObject sentry;
+    public GameObject curr;
+
+    private GameObject currObj;
+
+    private List<GameObject[]> enemy;
 
     private GameObject GetPath(int top, int bot) {
         return paths[top * 8 + bot];
@@ -140,15 +147,36 @@ public class Minimap : MonoBehaviour {
 
         map.Add(pathLayer);
         map.Add(roomLayer);
+        enemy.Add(new GameObject[boardManager.GetComponent<BoardManager>().maxWidth]);
     }
 
     public Vector3 GetRoomCoord(int layer, int col) {
         return map[2 + 2 * layer][1 + 2 * col].transform.position;
     }
 
+    public void SetEnemy(int layer, int col, bool exists) {
+        if (exists && !enemy[layer][col]) {
+            enemy[layer][col] = Instantiate(enemyPrefab, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -5f)), Quaternion.identity);
+            enemy[layer][col].transform.SetParent(transform);
+        } else if (!exists && enemy[layer][col]) {
+            Destroy(enemy[layer][col]); 
+        }
+    }
+
+    public void SetSentry(int layer, int col) {
+        Instantiate(sentry, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
+    }
+
+    public void SetCurr(int layer, int col) {
+        Destroy(currObj);
+        currObj = Instantiate(curr, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
+    }
+
     // Use this for initialization
     void Start () {
         maxWidth = 1 + 2 * boardManager.GetComponent<BoardManager>().maxWidth;
+
+        enemy = new List<GameObject[]>();
 
         map = new List<GameObject[]>();
 
@@ -158,7 +186,8 @@ public class Minimap : MonoBehaviour {
             dummyLayer[i].transform.SetParent(transform);
         }
         map.Add(dummyLayer);
-	}
+        currObj = Instantiate(curr, (new Vector3(transform.position.x + maxWidth / 2, -2f, -3f)), Quaternion.identity);
+    }
 	
 	// Update is called once per frame
 	void Update () {

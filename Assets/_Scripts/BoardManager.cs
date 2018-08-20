@@ -19,6 +19,14 @@ public class BoardManager : MonoBehaviour {
 
     private bool changing = false;
 
+    public int GetCurrLayer() {
+        return currRoom.GetLayer() + 1;
+    }
+
+    public int GetLowestLayer() {
+        return board.Count - 3; 
+    }
+
     void InititializeBoard() {
         board = new List<Room[]>();
 
@@ -32,6 +40,7 @@ public class BoardManager : MonoBehaviour {
 
         currRoom = CreateRoom(0, maxWidth / 2);
         layer1[maxWidth / 2] = currRoom;
+        currRoom.SetBase();
 
         minimap.GenerateLayer(rooms, from, to);
 
@@ -116,11 +125,10 @@ public class BoardManager : MonoBehaviour {
         }
 
         float t = (((float)rooms.Count - 2) / (maxWidth - 2));
-        float removeChance = 0.9f * t * t;
-        float addChance = 0.9f * (1 - t) * (1 - t);
-
-        float r = Random.value;
-        if ((r -= removeChance) < 0) {
+        float removeChance = 0.9f * t;
+        float addChance = 0.6f * (1 - t);
+        
+        if (Random.value < removeChance) {
             int toRemove = rooms[Random.Range(0, rooms.Count - 1)];
             rooms.Remove(toRemove);
 
@@ -154,7 +162,8 @@ public class BoardManager : MonoBehaviour {
             to.Remove(toRemove);
             from.Add(toRemove);
             to.Add(link);
-        } else if ((r -= addChance) < 0) {
+        }
+        if (Random.value < addChance) {
             int toAdd = gaps[Random.Range(0, gaps.Count - 1)];
             rooms.Add(toAdd);
 
@@ -186,6 +195,19 @@ public class BoardManager : MonoBehaviour {
             }
             from.Add(link);
             to.Add(toAdd);
+        }
+
+        rooms.Sort();
+        for (int i = 0; i < rooms.Count - 1; i++) {
+            if (rooms[i + 1] - rooms[i] == 1 && lastRow[rooms[i]] && lastRow[rooms[i + 1]] && Random.value < 0.3f) {
+                if (Random.value < 0.5f) {
+                    from.Add(rooms[i]);
+                    to.Add(rooms[i + 1]);
+                } else {
+                    to.Add(rooms[i]);
+                    from.Add(rooms[i + 1]);
+                }
+            }
         }
 
 
@@ -267,7 +289,10 @@ public class BoardManager : MonoBehaviour {
         }
 
         while (t <= 1f) {
-            if (t > 0.5f) currRoom.Delete();
+            if (t > 0.5f) {
+                currRoom.Delete();
+                minimap.SetCurr(nextRoom.GetLayer(), nextRoom.GetCol());
+            }
             t += Time.unscaledDeltaTime / 2;
             float smooth = Mathf.SmoothStep(0f, 1f, t);
             mainCamera.transform.position = Vector3.Lerp(start, end, smooth) + (new Vector3(0, 0, -10));
@@ -291,5 +316,16 @@ public class BoardManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         currRoom.UpdatePlayerPosition();
+
+        if (GetCurrLayer() >= 3) {
+
+            for (int row = board.Count - 2; row < board.Count; row++) {
+                for (int col = 0; col < maxWidth; col++) {
+                    if (board[row][col]) {
+                        board[row][col].SpawnEnemy(0.005f);
+                    }
+                }
+            }
+        }
 	}
 }

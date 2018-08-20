@@ -28,6 +28,25 @@ public class PlayerController : MonoBehaviour {
     public GameObject projectile;
     public float projectileSpeed = 10;
 
+    private int health = 10;
+    private int ammo = 20;
+
+    public void Damage(int damage) {
+        health -= damage;
+    }
+
+    public void ChangeAmmo(int diff) {
+        ammo += diff;
+    }
+
+    public int GetHealth() {
+        return health;
+    }
+
+    public int GetAmmo() {
+        return ammo;
+    }
+
 	// Use this for initialization
 	void Start () {
         rb = GetComponent<Rigidbody2D>();
@@ -56,7 +75,7 @@ public class PlayerController : MonoBehaviour {
 
         Move(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-        if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetMouseButtonDown(0) && ammo > 0) {
             charging = true;
             chargeBar.SetActive(true);
         }
@@ -76,7 +95,8 @@ public class PlayerController : MonoBehaviour {
 
                 float rot_z = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                 instance.transform.rotation = Quaternion.Euler(0f, 0f, rot_z);
-                instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * instance.transform.right ;
+                instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * instance.transform.right;
+                ammo--;
             }
 
             charge = 0;

@@ -24,10 +24,13 @@ public class ProjectileHandler : MonoBehaviour {
         this.isPlayer = isPlayer;
     }
 
-    private void OnCollisionEnter2D(Collision2D collision) {
-
-        if (!collided && (isPlayer != (collision.collider.tag == "Player"))) {
-            transform.SetParent(collision.collider.gameObject.transform);
+    public bool CollideWith(GameObject other) {
+        if (!isPlayer) {
+            Destroy(gameObject);
+            return true;
+        }
+        if (!collided) {
+            transform.SetParent(other.transform);
             rb.isKinematic = true;
 
             rb.velocity = Vector3.zero;
@@ -36,6 +39,24 @@ public class ProjectileHandler : MonoBehaviour {
             GetComponent<Collider2D>().isTrigger = true;
 
             collided = true;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) {
+
+        if ((isPlayer != (collision.collider.tag == "Player"))) {
+            CollideWith(collision.collider.gameObject);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision) {
+        if (collision.gameObject.tag == "Player") {
+            collision.gameObject.GetComponent<PlayerController>().ChangeAmmo(1);
+            Destroy(gameObject);
         }
     }
 }
