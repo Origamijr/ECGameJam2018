@@ -27,6 +27,7 @@ public class BoardManager : MonoBehaviour {
         return board.Count - 3; 
     }
 
+    // A buch of magic numbers and stuff to create the tutorial layers
     void InititializeBoard() {
         board = new List<Room[]>();
 
@@ -89,20 +90,23 @@ public class BoardManager : MonoBehaviour {
         minimap.GenerateLayer(rooms, from, to);
 
         board.Add(layer4);
-
-
+        
         // generate room
         currRoom.RoomSetup();
         mainCamera.transform.position = new Vector3(currRoom.GetMidpoint().x, currRoom.GetMidpoint().y, -10f);
         minimapCamera.transform.position = minimap.GetRoomCoord(0, maxWidth / 2) + (new Vector3(0f, 0f, -10f));
-    }
+    } // end of InitializeBoard
 
+
+    // instantiates a room (does not create path links)
     Room CreateRoom(int layer, int col) {
         Room room = Instantiate(roomPrefab).GetComponent<Room>();
         room.SetLayer(layer, col);
         return room;
     }
 
+
+    // procedurally generate a layer
     void GenerateLayer() {
         Room[] lastRow = board[board.Count - 1];
         int layer = board.Count;
@@ -124,14 +128,17 @@ public class BoardManager : MonoBehaviour {
             }
         }
 
+        // linear chance to remove/add (independant) a room
         float t = (((float)rooms.Count - 2) / (maxWidth - 2));
         float removeChance = 0.9f * t;
         float addChance = 0.6f * (1 - t);
         
         if (Random.value < removeChance) {
+            // remove a room
             int toRemove = rooms[Random.Range(0, rooms.Count - 1)];
             rooms.Remove(toRemove);
 
+            // move left and right from the removed room to find the new upper room
             int low = toRemove, high = toRemove, link = 0;
             while (true) {
                 if (low < 0) {
@@ -158,15 +165,19 @@ public class BoardManager : MonoBehaviour {
                     }
                 }
             }
+
+            // remove old path and add new path
             from.Remove(toRemove);
             to.Remove(toRemove);
             from.Add(toRemove);
             to.Add(link);
         }
         if (Random.value < addChance) {
+            // add a room in a randomly selected empty space
             int toAdd = gaps[Random.Range(0, gaps.Count - 1)];
             rooms.Add(toAdd);
 
+            // move left and right from the selected gap to obtain the new upper room
             int low = toAdd, high = toAdd, link = 0;
             while (true) {
                 if (low < 0) {
@@ -193,10 +204,15 @@ public class BoardManager : MonoBehaviour {
                     }
                 }
             }
+
+            // create new path
             from.Add(link);
             to.Add(toAdd);
         }
 
+        // TODO: room shifting! (to get rid of the awkward random straights
+
+        // if four rooms form a square, there is a chance to create a diagonal path between the two
         rooms.Sort();
         for (int i = 0; i < rooms.Count - 1; i++) {
             if (rooms[i + 1] - rooms[i] == 1 && lastRow[rooms[i]] && lastRow[rooms[i + 1]] && Random.value < 0.3f) {
@@ -209,9 +225,8 @@ public class BoardManager : MonoBehaviour {
                 }
             }
         }
-
-
-        // generate
+        
+        // actually generate the rooms
         rooms.Sort();
         from.Sort();
         to.Sort();
