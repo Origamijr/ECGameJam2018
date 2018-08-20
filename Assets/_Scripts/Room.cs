@@ -191,7 +191,7 @@ public class Room : MonoBehaviour {
 
     public void Delete() {
         foreach (Transform child in transform) {
-            if (child.tag == "Tile" || child.tag == "DownStairs" || child.tag == "UpStairs") {
+            if (child.gameObject.CompareTag("Tile") || child.gameObject.CompareTag("DownStairs") || child.gameObject.CompareTag("UpStairs")) {
                 Destroy(child.gameObject);
             }
         }

@@ -144,7 +144,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void OnCollisionEnter2D(Collision2D collision) {
-        if (collision.collider.tag == "UpStairs" || collision.collider.tag == "DownStairs") {
+        if (collision.collider.CompareTag("UpStairs") || collision.collider.CompareTag("DownStairs")) {
             gameManager.GetComponent<BoardManager>().ChangeRoom();
         }
     }

@@ -48,13 +48,13 @@ public class ProjectileHandler : MonoBehaviour {
 
     private void OnCollisionEnter2D(Collision2D collision) {
 
-        if ((isPlayer != (collision.collider.tag == "Player"))) {
+        if ((isPlayer != (collision.collider.CompareTag("Player")))) {
             CollideWith(collision.collider.gameObject);
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision) {
-        if (collision.gameObject.tag == "Player") {
+        if (collision.gameObject.CompareTag("Player")) {
             collision.gameObject.GetComponent<PlayerController>().ChangeAmmo(1);
             Destroy(gameObject);
         }

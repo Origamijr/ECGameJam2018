@@ -116,7 +116,7 @@ public class Enemy : MonoBehaviour {
     }
 
     private void OnTriggerEnter2D(Collider2D collision) {
-        if (collision.gameObject.tag == "Projectile" && !dead) {
+        if (collision.gameObject.CompareTag("Projectile") && !dead) {
             if (collision.gameObject.GetComponent<ProjectileHandler>().CollideWith(gameObject)) {
                 Damage(10);
                 if (dead) {
@@ -125,7 +125,7 @@ public class Enemy : MonoBehaviour {
             }
         }
 
-        if (collision.gameObject.tag == "Player") {
+        if (collision.gameObject.CompareTag("Player")) {
             if (dead) {
                 collected = true;
                 if (tutorial) {
