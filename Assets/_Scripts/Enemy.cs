@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour {
 
+    private GameManager gm;
+
     public GameObject sprite;
 
     private GameObject player;
@@ -31,6 +33,8 @@ public class Enemy : MonoBehaviour {
     private int prize = 1;
 
     public bool tutorial = false;
+
+    // PUBLIC INTERFACE ------------------------------------------------------------------------------------------------------------- 
 
     public void Hide() {
         sprite.SetActive(false);
@@ -90,8 +94,11 @@ public class Enemy : MonoBehaviour {
         toSection = to;
     }
 
+    // PRIVATE PARTS -----------------------------------------------------------------------------------------------------------------
+
 	// Use this for initialization
 	void Start () {
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
         player = GameObject.FindWithTag("Player");
         rb = GetComponent<Rigidbody2D>();
 	}

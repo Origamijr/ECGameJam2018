@@ -5,6 +5,8 @@ using Random = UnityEngine.Random;
 
 public class BoardManager : MonoBehaviour {
 
+    private GameManager gm;
+
     public GameObject mainCamera;
     public GameObject minimapCamera;
     public GameObject roomPrefab;
@@ -19,6 +21,8 @@ public class BoardManager : MonoBehaviour {
 
     private bool changing = false;
 
+    // PUBLIC INTERFACE ------------------------------------------------------------------------------------------------
+
     public int GetCurrLayer() {
         return currRoom.GetLayer() + 1;
     }
@@ -26,6 +30,25 @@ public class BoardManager : MonoBehaviour {
     public int GetLowestLayer() {
         return board.Count - 3; 
     }
+
+    public void ChangeRoom() {
+        if (!changing) {
+            changing = true;
+            StartCoroutine("CameraPan");
+        }
+    }
+
+    // PRIVATE PARTS ------------------------------------------------------------------------------------------------------
+
+    // Use this for initialization
+    void Start () {
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        mainCamera = gm.GetMainCamera();
+        minimapCamera = gm.GetMinimapCamera();
+        minimap = gm.GetMinimap();
+        InititializeBoard();
+	}
+
 
     // A buch of magic numbers and stuff to create the tutorial layers
     void InititializeBoard() {
@@ -114,7 +137,6 @@ public class BoardManager : MonoBehaviour {
         List<int> rooms = new List<int>();
         List<int> from = new List<int>();
         List<int> to = new List<int>();
-
         List<int> gaps = new List<int>();
 
         // establish straights
@@ -275,19 +297,15 @@ public class BoardManager : MonoBehaviour {
         }
         board.Add(newRow);
         minimap.GenerateLayer(rooms, from, to);
-    }
+    } // end of GenerateLayer()
 
-    public void ChangeRoom() {
-        if (!changing) {
-            changing = true;
-            StartCoroutine("CameraPan");
-        }
-    }
 
+    // IEnumerator to be used on room transitions
     IEnumerator CameraPan() {
         float t = 0f;
-        Time.timeScale = 0f;
+        Time.timeScale = 0f;    // idk if its a good idea to use timescale, but it works for now
         
+        // get next room
         int newSection = 5 - currRoom.GetRoomSection();
         Room nextRoom = currRoom.GetNextRoom();
         nextRoom.RoomSetup();
@@ -304,14 +322,16 @@ public class BoardManager : MonoBehaviour {
         }
 
         while (t <= 1f) {
-            if (t > 0.5f) {
-                currRoom.Delete();
-                minimap.SetCurr(nextRoom.GetLayer(), nextRoom.GetCol());
+            if (!gm.IsPaused()) {
+                if (t > 0.5f) {
+                    currRoom.Delete();
+                    minimap.SetCurr(nextRoom.GetLayer(), nextRoom.GetCol());
+                }
+                t += Time.unscaledDeltaTime / 2;
+                float smooth = Mathf.SmoothStep(0f, 1f, t);
+                mainCamera.transform.position = Vector3.Lerp(start, end, smooth) + (new Vector3(0, 0, -10));
+                minimapCamera.transform.position = Vector3.Lerp(mmStart, mmEnd, smooth) + (new Vector3(0, 0, -10));
             }
-            t += Time.unscaledDeltaTime / 2;
-            float smooth = Mathf.SmoothStep(0f, 1f, t);
-            mainCamera.transform.position = Vector3.Lerp(start, end, smooth) + (new Vector3(0, 0, -10));
-            minimapCamera.transform.position = Vector3.Lerp(mmStart, mmEnd, smooth) + (new Vector3(0, 0, -10));
             yield return null;
         }
 
@@ -321,23 +341,21 @@ public class BoardManager : MonoBehaviour {
         Time.timeScale = 1f;
         changing = false;
     }
-
-    // Use this for initialization
-    void Start () {
-        minimap = minimapObj.GetComponent<Minimap>();
-        InititializeBoard();
-	}
 	
 	// Update is called once per frame
 	void Update () {
-        currRoom.UpdatePlayerPosition();
+        if (!gm.IsPaused()) {
+            currRoom.UpdatePlayerPosition();
 
-        if (GetCurrLayer() >= 3) {
+            // spawn enemies only after the third layer has been reached
+            if (GetCurrLayer() >= 3) {
 
-            for (int row = board.Count - 2; row < board.Count; row++) {
-                for (int col = 0; col < maxWidth; col++) {
-                    if (board[row][col]) {
-                        board[row][col].SpawnEnemy(0.005f);
+                // randomly spawn enemies on the last two layers
+                for (int row = board.Count - 2; row < board.Count; row++) {
+                    for (int col = 0; col < maxWidth; col++) {
+                        if (board[row][col]) {
+                            board[row][col].SpawnEnemy(0.005f);
+                        }
                     }
                 }
             }

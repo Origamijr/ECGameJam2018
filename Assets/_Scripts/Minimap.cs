@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Minimap : MonoBehaviour {
 
+    private GameManager gm;
+
     public GameObject boardManager;
 
     public GameObject minimapCamera;
@@ -209,6 +211,8 @@ public class Minimap : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        
         maxWidth = 1 + 2 * boardManager.GetComponent<BoardManager>().maxWidth;
 
         enemies = new List<GameObject[]>();

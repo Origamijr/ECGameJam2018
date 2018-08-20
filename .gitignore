@@ -5,6 +5,8 @@
 [Bb]uilds/
 Assets/AssetStoreTools*
 
+Build.zip
+
 # Visual Studio cache directory
 .vs/
 
