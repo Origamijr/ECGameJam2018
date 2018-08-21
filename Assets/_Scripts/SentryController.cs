@@ -14,6 +14,8 @@ public class SentryController : MonoBehaviour {
 
     private static int price = 10;
 
+    public AudioClip shootSound;
+
     public static int GetPrice() {
         return price;
     }
@@ -49,6 +51,7 @@ public class SentryController : MonoBehaviour {
             float rot_z = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             instance.transform.rotation = Quaternion.Euler(0f, 0f, rot_z);
             instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * instance.transform.right;
+            GetComponent<AudioSource>().PlayOneShot(shootSound, 0.3f);
             return true;
         } else if (cooldown <= 0) {
             cooldown = cooldownSet;

@@ -7,10 +7,9 @@ public class BoardManager : MonoBehaviour {
 
     private GameManager gm;
 
-    public GameObject mainCamera;
-    public GameObject minimapCamera;
+    private GameObject mainCamera;
+    private GameObject minimapCamera;
     public GameObject roomPrefab;
-    public GameObject minimapObj;
     private Minimap minimap;
     
     private Room currRoom = null;

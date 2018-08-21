@@ -8,7 +8,7 @@ public class Enemy : MonoBehaviour {
 
     public GameObject sprite;
 
-    private GameObject player;
+    private PlayerController player;
 
     private Rigidbody2D rb;
 
@@ -99,7 +99,7 @@ public class Enemy : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
-        player = GameObject.FindWithTag("Player");
+        player = gm.GetPlayer();
         rb = GetComponent<Rigidbody2D>();
 	}
 	
@@ -110,7 +110,7 @@ public class Enemy : MonoBehaviour {
 
     public void Move() {
         if (!dead) {
-            Vector3 toPlayer = player.transform.position - transform.position;
+            Vector3 toPlayer = player.GetPosition() - transform.position;
             movement = (5 * movement + toPlayer).normalized;
             rb.velocity = speed * movement;
         } else {
@@ -136,13 +136,14 @@ public class Enemy : MonoBehaviour {
             if (dead) {
                 collected = true;
                 if (tutorial) {
-                    player.GetComponent<PlayerController>().ChangeAmmo(GetPrize());
+                    player.ChangeAmmo(GetPrize());
                     Destroy(gameObject);
                 }
             } else {
                 if (damageCooldown <= 0) {
                     damageCooldown = damageCooldownSet;
-                    player.GetComponent<PlayerController>().Damage(damage);
+                    player.Damage(damage);
+                    player.Flinch(player.GetPosition() - transform.position);
                 }
             }
         }

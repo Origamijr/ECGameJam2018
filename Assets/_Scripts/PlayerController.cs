@@ -4,12 +4,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
 
-    public GameObject gameManager;
+    private GameManager gm;
 
     public GameObject sprite;
     
-    public float speed = 1f;
-    public float dash = 1.5f;
+    private float speed = 3f;
     private Vector3 movement;
 
     private bool rolling;
@@ -22,17 +21,43 @@ public class PlayerController : MonoBehaviour {
     private float charge = 0f;
     public float chargeRate = 5f;
     private bool charging = false;
+    public AudioClip shootSound;
 
     private Rigidbody2D rb;
 
     public GameObject projectile;
-    public float projectileSpeed = 10;
+    private float projectileSpeed = 10;
+
+    private bool flinch = false;
+    private float flinchForce = 100f;
+    private int flinchTimer = 0;
+    private int flinchTime = 10;
+    public AudioClip flinchSound;
 
     private int health = 10;
     private int ammo = 20;
 
+    //  PUBLIC INTERFACE ------------------------------------------------------------------------------------------
+
     public void Damage(int damage) {
-        health -= damage;
+        if (!rolling) {
+            health -= damage;
+        }
+    }
+
+    public void Flinch(Vector3 direction) {
+        if (!rolling && !flinch) {
+            GetComponent<AudioSource>().PlayOneShot(flinchSound, 1f);
+
+            sprite.GetComponent<SpriteRenderer>().color = new Color(1f, 0.5f, 0.5f);
+            rb.velocity = flinchForce * direction.normalized;
+
+            flinch = true;
+            flinchTimer = flinchTime;
+            charging = false;
+            charge = 0;
+            chargeBar.SetActive(false);
+        }
     }
 
     public void ChangeAmmo(int diff) {
@@ -47,8 +72,15 @@ public class PlayerController : MonoBehaviour {
         return ammo;
     }
 
-	// Use this for initialization
-	void Start () {
+    public Vector3 GetPosition() {
+        return transform.position;
+    }
+
+    // PRIVATE PARTS ---------------------------------------------------------------------------------------------------
+
+    // Use this for initialization
+    void Start () {
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
         rb = GetComponent<Rigidbody2D>();
 	}
 	
@@ -56,7 +88,14 @@ public class PlayerController : MonoBehaviour {
 	void Update () {
         transform.rotation = Quaternion.identity;
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) && !rolling) {
+        if (flinch) {
+            if (flinchTimer-- <= 0) {
+                sprite.GetComponent<SpriteRenderer>().color = Color.white;
+                flinch = false;
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && !rolling && !flinch) {
             rolling = true;
             speed += rollAdd;
         }
@@ -96,6 +135,8 @@ public class PlayerController : MonoBehaviour {
                 float rot_z = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                 instance.transform.rotation = Quaternion.Euler(0f, 0f, rot_z);
                 instance.GetComponent<Rigidbody2D>().velocity = projectileSpeed * instance.transform.right;
+
+                GetComponent<AudioSource>().PlayOneShot(shootSound, 1f);
                 ammo--;
             }
 
@@ -107,7 +148,7 @@ public class PlayerController : MonoBehaviour {
 
     void Move(float h, float v) {
         if (!rolling) {
-            if (h != 0f || v != 0f) {
+            if ((h != 0f || v != 0f) && !flinch) {
                 movement = (2 * movement + h * transform.right + v * transform.up).normalized;
                 rb.velocity = speed * movement;
             } else {
@@ -139,13 +180,9 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
-    public Vector3 GetPosition() {
-        return transform.position;
-    }
-
     private void OnCollisionEnter2D(Collision2D collision) {
         if (collision.collider.CompareTag("UpStairs") || collision.collider.CompareTag("DownStairs")) {
-            gameManager.GetComponent<BoardManager>().ChangeRoom();
+            gm.GetComponent<BoardManager>().ChangeRoom();
         }
     }
 }

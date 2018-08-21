@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Room : MonoBehaviour {
 
+    private GameManager gm;
+
     private bool isBase = false;
 
     private float tileSize = 0.64f;
@@ -23,7 +25,7 @@ public class Room : MonoBehaviour {
 
     private GameObject[][] grid;
 
-    private GameObject player;
+    private PlayerController player;
     private int roomSection = 0;
 
     private Minimap minimap;
@@ -37,6 +39,10 @@ public class Room : MonoBehaviour {
     private List<SentryController> sentries = new List<SentryController>();
 
     private bool loaded = false;
+
+    public AudioClip sentryBuildSound;
+
+    // PUBLIC INTERFACE -----------------------------------------------------------------------------------------------------
 
     public void RoomSetup() {
 
@@ -207,10 +213,13 @@ public class Room : MonoBehaviour {
         loaded = false;
     }
 
+    // PRIVATE PARTS --------------------------------------------------------------------------------------------------------------------------
+
     // Use this for initialization
     void Start() {
-        player = GameObject.FindWithTag("Player");
-        minimap = GameObject.FindWithTag("Minimap").GetComponent<Minimap>();
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        player = gm.GetPlayer(); ;
+        minimap = gm.GetMinimap(); ;
     }
 
     // Update is called once per frame
@@ -267,6 +276,7 @@ public class Room : MonoBehaviour {
             }
         } else {
             if (Input.GetKeyDown(KeyCode.E) && player.GetComponent<PlayerController>().GetAmmo() >= SentryController.GetPrice()) {
+                GetComponent<AudioSource>().PlayOneShot(sentryBuildSound, 1f);
                 player.GetComponent<PlayerController>().ChangeAmmo(-SentryController.GetPrice());
                 sentries.Add(Instantiate(sentry, player.transform.position, Quaternion.identity).GetComponent<SentryController>());
                 minimap.SetSentry(layer, col);
@@ -331,7 +341,7 @@ public class Room : MonoBehaviour {
     }
 
     public void UpdatePlayerPosition() {
-        Vector3 playerPos = player.GetComponent<PlayerController>().GetPosition();
+        Vector3 playerPos = player.GetPosition();
 
         roomSection = ((playerPos.y > midpoint.y) ? 0 : 3) + ((Mathf.Abs((float)(playerPos.x - midpoint.x)) < tileSize * 3) ? 1 : (playerPos.x < midpoint.x) ? 0 : 2);
     }

@@ -7,8 +7,8 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour {
 
-    public GameObject camera;
-    public GameObject minimapCam;
+    public GameObject mainCamera;
+    public GameObject minimapCamera;
 
     public Text uiText;
     public GameObject gameOverScreen;
@@ -20,10 +20,13 @@ public class GameManager : MonoBehaviour {
     private int baseHealth = 10;
 
     private bool paused = false;
+
+    public AudioClip baseDamageSound;
     
     // PUBLIC INTERFACE ----------------------------------------------------------------------------------------------------------------------
 
     public void DamageBase(int damage) {
+        GetComponent<AudioSource>().PlayOneShot(baseDamageSound, 1f);
         baseHealth -= damage;
     }
 
@@ -36,7 +39,7 @@ public class GameManager : MonoBehaviour {
     }
 
     public GameObject GetMainCamera() {
-        return camera;
+        return mainCamera;
     }
 
     public Minimap GetMinimap() {
@@ -44,7 +47,7 @@ public class GameManager : MonoBehaviour {
     }
 
     public GameObject GetMinimapCamera() {
-        return minimapCam;
+        return minimapCamera;
     }
 
     public bool IsPaused() {
@@ -61,7 +64,7 @@ public class GameManager : MonoBehaviour {
 	void Awake () {
         player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
         boardManager = gameObject.GetComponent<BoardManager>();
-        minimap = GameObject.FindWithTag("Minimap".GetComponent<Minimap>();
+        minimap = GameObject.FindWithTag("Minimap").GetComponent<Minimap>();
 	}
 	
 	// Update is called once per frame

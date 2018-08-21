@@ -6,9 +6,8 @@ public class Minimap : MonoBehaviour {
 
     private GameManager gm;
 
-    public GameObject boardManager;
-
-    public GameObject minimapCamera;
+    private BoardManager boardManager;
+    private GameObject minimapCamera;
 
     private int maxWidth;
 
@@ -24,6 +23,63 @@ public class Minimap : MonoBehaviour {
     private GameObject currObj;
 
     private List<GameObject[]> enemies;
+
+    // PUBLIC INTERFACE ------------------------------------------------------------------------------------------------------------------
+
+    // convert coordinates to vector3 position
+    public Vector3 GetRoomCoord(int layer, int col) {
+        return map[2 + 2 * layer][1 + 2 * col].transform.position;
+    }
+
+
+    // sets the enemy icon
+    public void SetEnemy(int layer, int col, bool exists) {
+        if (exists && !enemies[layer][col]) {
+            enemies[layer][col] = Instantiate(enemyPrefab, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -5f)), Quaternion.identity);
+            enemies[layer][col].transform.SetParent(transform);
+        } else if (!exists && enemies[layer][col]) {
+            Destroy(enemies[layer][col]);
+        }
+    }
+
+    // sets the sentry icon
+    public void SetSentry(int layer, int col) {
+        Instantiate(sentry, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
+    }
+
+
+    // sets the current tile border (will overrite the previous current tile border)
+    public void SetCurr(int layer, int col) {
+        Destroy(currObj);
+        currObj = Instantiate(curr, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
+    }
+
+
+    // PRIVATE PARTS -----------------------------------------------------------------------------------------------------------------------------
+
+    // Use this for initialization
+    void Start() {
+        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        boardManager = gm.GetBoardManager();
+        minimapCamera = gm.GetMinimapCamera();
+
+        maxWidth = 1 + 2 * boardManager.GetComponent<BoardManager>().maxWidth;
+
+        enemies = new List<GameObject[]>();
+
+        map = new List<GameObject[]>();
+
+        // dummy layer since generateLayer looks at the last added layer
+        GameObject[] dummyLayer = new GameObject[maxWidth];
+        for (int i = 0; i < maxWidth; i++) {
+            dummyLayer[i] = Instantiate(blank, new Vector3(transform.position.x + i, 0f, 0f), Quaternion.identity);
+            dummyLayer[i].transform.SetParent(transform);
+        }
+        map.Add(dummyLayer);
+
+        // instantiate the current tile border where I know the first room will be
+        currObj = Instantiate(curr, (new Vector3(transform.position.x + maxWidth / 2, -2f, -3f)), Quaternion.identity);
+    }
 
     private GameObject GetPath(int top, int bot) {
         return paths[top * 8 + bot];
@@ -178,59 +234,7 @@ public class Minimap : MonoBehaviour {
         enemies.Add(new GameObject[boardManager.GetComponent<BoardManager>().maxWidth]);
     } // end GenerateLayer()
 
-
-
-    // convert coordinates to vector3 position
-    public Vector3 GetRoomCoord(int layer, int col) {
-        return map[2 + 2 * layer][1 + 2 * col].transform.position;
-    }
-
-
-    // sets the enemy icon
-    public void SetEnemy(int layer, int col, bool exists) {
-        if (exists && !enemies[layer][col]) {
-            enemies[layer][col] = Instantiate(enemyPrefab, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -5f)), Quaternion.identity);
-            enemies[layer][col].transform.SetParent(transform);
-        } else if (!exists && enemies[layer][col]) {
-            Destroy(enemies[layer][col]); 
-        }
-    }
-
-
-    // sets the sentry icon
-    public void SetSentry(int layer, int col) {
-        Instantiate(sentry, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
-    }
-
-
-    // sets the current tile border (will overrite the previous current tile border)
-    public void SetCurr(int layer, int col) {
-        Destroy(currObj);
-        currObj = Instantiate(curr, GetRoomCoord(layer, col) + (new Vector3(0f, 0f, -3f)), Quaternion.identity);
-    }
-
-    // Use this for initialization
-    void Start () {
-        gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
-        
-        maxWidth = 1 + 2 * boardManager.GetComponent<BoardManager>().maxWidth;
-
-        enemies = new List<GameObject[]>();
-
-        map = new List<GameObject[]>();
-
-        // dummy layer since generateLayer looks at the last added layer
-        GameObject[] dummyLayer = new GameObject[maxWidth];
-        for (int i = 0; i < maxWidth; i++) {
-            dummyLayer[i] = Instantiate(blank, new Vector3(transform.position.x + i, 0f, 0f), Quaternion.identity);
-            dummyLayer[i].transform.SetParent(transform);
-        }
-        map.Add(dummyLayer);
-
-        // instantiate the current tile border where I know the first room will be
-        currObj = Instantiate(curr, (new Vector3(transform.position.x + maxWidth / 2, -2f, -3f)), Quaternion.identity);
-    }
-	
+    
 	// Update is called once per frame
 	void Update () {
 		
